@@ -8,6 +8,8 @@ import uz.drivesmart.dto.request.TestRequest;
 import uz.drivesmart.dto.response.*;
 import uz.drivesmart.entity.TestSession;
 import uz.drivesmart.entity.UserAnswer;
+import uz.drivesmart.enums.TestStatus;
+import uz.drivesmart.exception.BusinessException;
 import uz.drivesmart.exception.ResourceNotFoundException;
 import uz.drivesmart.repository.*;
 import uz.drivesmart.service.TestService;
@@ -24,9 +26,8 @@ public class TestServiceImpl implements TestService {
     private final UserRepository userRepository;
     private final UserAnswerRepository answerRepository;
     private final MapperUtil mapperUtil;
-
     @Override
-    @Transactional
+    @Transactional // ✅ Override read-only
     public TestSessionResponse startTest(Long userId, TestRequest request) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
@@ -36,8 +37,10 @@ public class TestServiceImpl implements TestService {
                 request.questionCount()
         );
 
-        if (questions.isEmpty()) {
-            throw new ResourceNotFoundException("Savollar topilmadi");
+        if (questions.size() < request.questionCount()) {
+            throw new BusinessException(
+                    String.format("Mavzuda faqat %d ta savol mavjud", questions.size())
+            );
         }
 
         var session = new TestSession();
@@ -45,20 +48,52 @@ public class TestServiceImpl implements TestService {
         session.setTopic(request.topic());
         session.setTotalQuestions(questions.size());
         session.setStartedAt(LocalDateTime.now());
+        session.setStatus(TestStatus.IN_PROGRESS);
 
-        return mapperUtil.toTestSessionResponse(sessionRepository.save(session));
+        session = sessionRepository.save(session);
+
+        return mapperUtil.toTestSessionResponse(session);
     }
 
     @Override
     @Transactional
-    public AnswerResultResponse submitAnswer(Long userId, Long sessionId, SubmitAnswerRequest request) {
+    public AnswerResultResponse submitAnswer(
+            Long userId,
+            Long sessionId,
+            SubmitAnswerRequest request) {
+
+
         var session = sessionRepository.findByIdAndUserId(sessionId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sessiya topilmadi"));
+
+        if (session.isExpired()) {
+            session.setStatus(TestStatus.ABANDONED);
+            session.setFinishedAt(LocalDateTime.now());
+            sessionRepository.save(session);
+            throw new BusinessException("Test vaqti tugadi");
+        }
+
+        // ✅ Test tugagan bo'lsa, javob qabul qilmaslik
+        if (session.getStatus() == TestStatus.COMPLETED) {
+            throw new BusinessException("Test allaqachon tugagan");
+        }
 
         var question = questionRepository.findById(request.questionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Savol topilmadi"));
 
-        boolean isCorrect = question.getCorrectAnswer().equals(request.answer());
+        // ✅ Duplicate answer check
+        boolean alreadyAnswered = answerRepository.existsByTestSessionIdAndQuestionId(
+                sessionId,
+                request.questionId()
+        );
+
+        if (alreadyAnswered) {
+            throw new BusinessException("Bu savolga javob allaqachon berilgan");
+        }
+
+        boolean isCorrect = question.getCorrectAnswer()
+                .trim()
+                .equalsIgnoreCase(request.answer().trim());
 
         var answer = new UserAnswer();
         answer.setUser(session.getUser());
@@ -71,10 +106,22 @@ public class TestServiceImpl implements TestService {
 
         if (isCorrect) {
             session.setScore(session.getScore() + 1);
-            sessionRepository.save(session);
         }
 
-        return new AnswerResultResponse(isCorrect, question.getCorrectAnswer(), session.getScore());
+        // ✅ Agar barcha savollarga javob berilgan bo'lsa, test tugadi
+        long answeredCount = answerRepository.countByTestSessionId(sessionId);
+        if (answeredCount >= session.getTotalQuestions()) {
+            session.setStatus(TestStatus.COMPLETED);
+            session.setFinishedAt(LocalDateTime.now());
+        }
+
+        sessionRepository.save(session);
+
+        return new AnswerResultResponse(
+                isCorrect,
+                question.getCorrectAnswer(),
+                session.getScore()
+        );
     }
 
     @Override

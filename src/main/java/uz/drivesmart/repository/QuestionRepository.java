@@ -1,6 +1,8 @@
 package uz.drivesmart.repository;
 
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +25,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Query("SELECT DISTINCT q.topic FROM Question q")
     List<String> findDistinctTopics();
+
+    boolean existsByTextAndTopic(String text, String topic);
+
 }

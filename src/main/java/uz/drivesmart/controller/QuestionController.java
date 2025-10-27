@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/questions")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
 public class QuestionController {
     private final QuestionService questionService;
 

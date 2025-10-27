@@ -1,65 +1,52 @@
 package uz.drivesmart.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import uz.drivesmart.enums.Role;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-@Entity
-@Table(name = "users")
+/**
+ * Tizim foydalanuvchilari entity'si
+ * Authentication va role-based authorization uchun ishlatiladi
+ */
 @Getter
 @Setter
-public class User implements UserDetails {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "users")
+public class User extends BaseEntity {
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @NotBlank(message = "Ism majburiy")
+    @Size(max = 50, message = "Ism 50 ta belgidan oshmasligi kerak")
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
 
-    @Column(nullable = false)
+    @Size(max = 50, message = "Familiya 50 ta belgidan oshmasligi kerak")
+    @Column(name = "last_name", length = 50)
+    private String lastName;
+
+    @NotBlank(message = "Telefon raqami majburiy")
+    @Pattern(regexp = "^998[0-9]{9}$", message = "Telefon raqami noto'g'ri formatda")
+    @Column(name = "phone_number", unique = true, nullable = false, length = 15)
+    private String phoneNumber;
+
+    @NotBlank(message = "Parol majburiy")
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role = Role.USER;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
-    }
-
-    @Override
-    public String getPassword() {
-        return passwordHash;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 }
