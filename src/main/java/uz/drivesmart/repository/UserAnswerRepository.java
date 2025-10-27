@@ -1,4 +1,5 @@
 package uz.drivesmart.repository;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +26,7 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer, Long> {
 
     @Query("SELECT COUNT(ua) FROM UserAnswer ua WHERE ua.user.id = :userId")
     long countTotalAnswersByUserId(@Param("userId") Long userId);
+
+    boolean existsByTestSessionId(Long aLong);
+
 }

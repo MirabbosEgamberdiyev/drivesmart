@@ -30,22 +30,29 @@ public class Question extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String correctAnswer;
 
+    // ✅ To'g'ri javob izohi (nima uchun to'g'ri)
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
+
     @Column(nullable = false, length = 100)
     private String topic;
 
-    // ✅ Rasm yo'lini saqlash (file system yoki S3)
+    // Rasm yo'li
     @Column(name = "image_path", length = 500)
     private String imagePath;
 
-    // ✅ Rasm metadata
     @Column(name = "image_content_type", length = 50)
     private String imageContentType;
 
     @Column(name = "image_size")
     private Long imageSize;
 
-    // ✅ Business logic
+    // Business logic
     public boolean hasImage() {
         return imagePath != null && !imagePath.isBlank();
+    }
+
+    public boolean hasExplanation() {
+        return explanation != null && !explanation.isBlank();
     }
 }
