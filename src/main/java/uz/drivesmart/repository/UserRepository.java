@@ -64,4 +64,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber AND u.id != :id")
     boolean existsByPhoneNumberAndIdNot(@Param("phoneNumber") String phoneNumber, @Param("id") Long id);
+    // ✅ Email orqali qidirish
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    boolean findByEmail(String email);
+
+    // ✅ Email mavjudligini tekshirish
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    boolean existsByEmail(String email);
 }

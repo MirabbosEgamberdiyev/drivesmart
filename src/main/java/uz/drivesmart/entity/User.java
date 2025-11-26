@@ -1,6 +1,8 @@
 package uz.drivesmart.entity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -9,9 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uz.drivesmart.enums.Role;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Tizim foydalanuvchilari entity'si
@@ -34,10 +33,15 @@ public class User extends BaseEntity {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
-    @NotBlank(message = "Telefon raqami majburiy")
+    // ✅ YECHIM: nullable=true qilamiz
     @Pattern(regexp = "^998[0-9]{9}$", message = "Telefon raqami noto'g'ri formatda")
-    @Column(name = "phone_number", unique = true, nullable = false, length = 15)
+    @Column(name = "phone_number", unique = true, nullable = true, length = 15)
     private String phoneNumber;
+
+    @Email(message = "Email noto'g'ri formatda")
+    @Schema(example = "mirabbos@example.com", description = "Email manzili")
+    @Column(name = "email", unique = true, nullable = true)
+    private String email;
 
     @NotBlank(message = "Parol majburiy")
     @Column(name = "password_hash", nullable = false)
@@ -49,4 +53,14 @@ public class User extends BaseEntity {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    // VALIDATSIYA: Kamida bittasi bo'lishi kerak
+    @PrePersist
+    @PreUpdate
+    private void validateUser() {
+        if ((phoneNumber == null || phoneNumber.isBlank()) &&
+                (email == null || email.isBlank())) {
+            throw new IllegalStateException("Telefon raqami yoki email kiritilishi shart");
+        }
+    }
 }

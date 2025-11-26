@@ -1,9 +1,8 @@
 package uz.drivesmart.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,9 +25,13 @@ public class UserUpdateRequestDto {
     @Size(max = 50, message = "Familiya 50 ta belgidan oshmasligi kerak")
     private String lastName;
 
-    @NotBlank(message = "Telefon raqami majburiy")
     @Pattern(regexp = "^998[0-9]{9}$", message = "Telefon raqami noto'g'ri formatda")
     private String phoneNumber;
+
+    @Email(message = "Email noto'g'ri formatda")
+    @Schema(example = "mirabbos@example.com", description = "Email manzili")
+    @Column(name = "email", unique = true, nullable = true)
+    private String email;
 
     @NotNull(message = "Rol majburiy")
     private Role role;

@@ -88,8 +88,6 @@ public class UserService {
      * @return Yangilangan foydalanuvchi ma'lumotlari
      */
     public UserResponseDto updateUser(Long id, UserUpdateRequestDto request) {
-        log.info("Updating user with ID: {}", id);
-
         User user = userRepository.findById(id)
                 .filter(u -> !u.getIsDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
@@ -97,6 +95,10 @@ public class UserService {
         // Telefon raqami unique ekanligini tekshirish (yangilanish paytida)
         if (userRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), id)) {
             throw new BusinessException("Bu telefon raqami allaqachon ro'yxatdan o'tgan");
+        }
+        // Telefon raqami unique ekanligini tekshirish (yangilanish paytida)
+        if (userRepository.findByEmail(request.getEmail())) {
+            throw new BusinessException("Bu email allaqachon ro'yxatdan o'tgan");
         }
 
         userMapper.updateEntityFromDto(request, user);

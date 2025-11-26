@@ -53,48 +53,42 @@ public class SecurityConfig {
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // AUTH - barcha autentifikatsiya endpointlari
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+
+                        // SWAGGER & API DOCS
                         .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/register",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/swagger-config"
                         ).permitAll()
-                        // SWAGGER VA API DOCS - HAMMA UCHUN OCHIQ
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-resources/**").permitAll()
-                        .requestMatchers("/webjars/**").permitAll()
-                        .requestMatchers("/swagger-ui/index.html").permitAll()
-                        .requestMatchers("/api-docs/**").permitAll()
-                        .requestMatchers("/swagger-config").permitAll()
 
-                        // Public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/health").permitAll()
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/favicon.ico").permitAll()
+                        // MONITORING
+                        .requestMatchers("/actuator/**", "/health").permitAll()
 
-                        // Fayl yuklash
-                        .requestMatchers("/api/files/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
+                        // FILES & UPLOADS
+                        .requestMatchers("/api/files/**", "/uploads/**").permitAll()
 
-                        // Static resources
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        // STATIC RESOURCES & SYSTEM
+                        .requestMatchers(
+                                "/",
+                                "/error",
+                                "/favicon.ico",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**"
+                        ).permitAll()
 
-                        // Boshqa barcha requestlar authenticate bo'lishi kerak
+                        // Qolgan barcha requestlar autentifikatsiya talab qiladi
                         .anyRequest().authenticated()
                 )
-                // JWT filter qo'shish
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

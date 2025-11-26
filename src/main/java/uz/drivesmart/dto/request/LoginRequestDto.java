@@ -1,6 +1,7 @@
 package uz.drivesmart.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -9,7 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 /**
- * Kirish uchun request DTO
+ * Login qilish (telefon yoki email orqali)
  */
 @Data
 @NoArgsConstructor
@@ -17,13 +18,15 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LoginRequestDto {
 
-    @NotBlank(message = "Telefon raqami majburiy")
-    @Pattern(regexp = "^998[0-9]{9}$", message = "Telefon raqami noto'g'ri formatda")
-    @Schema(example = "998889996499", description = "Telefon raqami")
+    @Schema(example = "998901234567", description = "Telefon yoki email")
     private String phoneNumber;
+
+    @Email
+    @Schema(example = "mirabbos@example.com")
+    private String email;
 
     @NotBlank(message = "Parol majburiy")
     @Size(min = 6, message = "Parol kamida 6 ta belgidan iborat bo'lishi kerak")
-    @Schema(example = "Admin.123$", description = "Foydalanuvchi paroli")
+    @Schema(example = "SecurePass123", description = "Foydalanuvchi paroli")
     private String password;
 }
