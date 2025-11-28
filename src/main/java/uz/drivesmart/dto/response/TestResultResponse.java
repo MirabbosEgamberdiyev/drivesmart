@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 public record TestResultResponse(
         Long sessionId,
         String topic,
-        int total,
-        int correct,
-        int score,
-        double percentage,
+        Integer totalQuestions,
+        Integer correctCount,
+        Integer score,
+        Double percentage,
         LocalDateTime startedAt,
         LocalDateTime finishedAt
 ) {}

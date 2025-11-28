@@ -15,8 +15,9 @@ public record TestResultDetailedResponse(
         Integer wrongCount,
         Integer score,
         Double percentage,
-        boolean passed, LocalDateTime startedAt,
+        boolean passed,
+        LocalDateTime startedAt,
         LocalDateTime finishedAt,
         Long durationSeconds,
-        List<AnswerDetailDto> answerDetails // ✅ Har bir savol bo'yicha tahlil
+        List<AnswerDetailDto> answers
 ) {}

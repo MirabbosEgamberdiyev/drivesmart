@@ -6,13 +6,14 @@ import java.util.List;
  * Har bir javob bo'yicha batafsil ma'lumot
  */
 
+
 public record AnswerDetailDto(
         Long questionId,
         String questionText,
         List<String> options,
-        String userAnswer,
+        String selectedAnswer,
         String correctAnswer,
         String explanation,
-        Boolean isCorrect,
+        boolean isCorrect,
         String imageUrl
 ) {}

@@ -10,6 +10,6 @@ public record QuestionForTestDto(
         String text,
         List<String> options,
         String imageUrl,
-        String correctAnswer,      // ✅ Frontend ilovada yashirinadi
-        String explanation         // ✅ Test tugagach ko'rsatiladi
+        String correctAnswer,
+        String explanation
 ) {}

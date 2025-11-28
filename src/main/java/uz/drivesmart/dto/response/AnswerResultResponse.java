@@ -1,7 +1,7 @@
 package uz.drivesmart.dto.response;
 
 public record AnswerResultResponse(
-        boolean correct,
+        boolean isCorrect,
         String correctAnswer,
-        int score
+        Integer currentScore
 ) {}

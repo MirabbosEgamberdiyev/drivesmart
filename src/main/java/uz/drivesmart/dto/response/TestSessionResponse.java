@@ -6,10 +6,10 @@ import java.time.LocalDateTime;
 public record TestSessionResponse(
         Long id,
         String topic,
-        int totalQuestions,
-        int score,
-        int correctCount,
-        int wrongCount,
+        Integer totalQuestions,
+        Integer score,
+        Integer correctCount,
+        Integer wrongCount,
         String status,
         LocalDateTime startedAt,
         LocalDateTime finishedAt

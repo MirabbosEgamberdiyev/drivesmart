@@ -13,10 +13,26 @@ import java.util.List;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
-
     @Query(value = "SELECT * FROM questions WHERE topic = :topic ORDER BY RANDOM() LIMIT :limit",
             nativeQuery = true)
     List<Question> findRandomByTopic(@Param("topic") String topic, @Param("limit") int limit);
+
+    // ✅ NEW: Exclude specific IDs
+    @Query(value = """
+        SELECT * FROM questions 
+        WHERE topic = :topic 
+        AND id NOT IN (:excludeIds)
+        ORDER BY RANDOM() 
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Question> findRandomByTopicExcluding(
+            @Param("topic") String topic,
+            @Param("excludeIds") List<Long> excludeIds,
+            @Param("limit") int limit
+    );
+
+    // ✅ NEW: Find by IDs and topic
+    List<Question> findByIdInAndTopic(List<Long> ids, String topic);
 
     List<Question> findByTopic(String topic);
 
