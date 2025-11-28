@@ -27,16 +27,17 @@ public interface UserMapper {
     /**
      * Request DTO dan Entity ga mapping
      */
+    @Mapping(target = "passwordHash", source = "password")
+    @Mapping(target = "email", source = "email")
+    @Mapping(target = "phoneNumber", source = "phoneNumber")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "lastModifiedDate", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "isActive", ignore = true)
     User toEntity(UserRequestDto dto);
-
     /**
      * Entity list dan Response DTO list ga mapping
      */

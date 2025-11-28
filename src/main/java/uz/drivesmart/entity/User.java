@@ -21,7 +21,11 @@ import uz.drivesmart.enums.Role;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_phone", columnList = "phone_number"),
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_deleted", columnList = "is_deleted")
+})
 public class User extends BaseEntity {
 
     @NotBlank(message = "Ism majburiy")
@@ -33,14 +37,13 @@ public class User extends BaseEntity {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
-    // ✅ YECHIM: nullable=true qilamiz
     @Pattern(regexp = "^998[0-9]{9}$", message = "Telefon raqami noto'g'ri formatda")
     @Column(name = "phone_number", unique = true, nullable = true, length = 15)
     private String phoneNumber;
 
     @Email(message = "Email noto'g'ri formatda")
     @Schema(example = "mirabbos@example.com", description = "Email manzili")
-    @Column(name = "email", unique = true, nullable = true)
+    @Column(name = "email", unique = true, nullable = true, length = 100)
     private String email;
 
     @NotBlank(message = "Parol majburiy")
@@ -48,19 +51,21 @@ public class User extends BaseEntity {
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", nullable = false, length = 20)
     private Role role = Role.USER;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    // VALIDATSIYA: Kamida bittasi bo'lishi kerak
+    /**
+     * VALIDATSIYA: Kamida bittasi bo'lishi kerak
+     */
     @PrePersist
     @PreUpdate
     private void validateUser() {
-        if ((phoneNumber == null || phoneNumber.isBlank()) &&
-                (email == null || email.isBlank())) {
-            throw new IllegalStateException("Telefon raqami yoki email kiritilishi shart");
+        if ((phoneNumber == null || phoneNumber.trim().isEmpty()) &&
+                (email == null || email.trim().isEmpty())) {
+            throw new IllegalStateException("Telefon raqami yoki emaildan kamida biri to'ldirilishi shart");
         }
     }
 }

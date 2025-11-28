@@ -24,7 +24,6 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
         AND v.isUsed = false 
         AND v.expiresAt > :now
         ORDER BY v.createdAt DESC
-        LIMIT 1
         """)
     Optional<VerificationCode> findLatestValidCode(
             @Param("recipient") String recipient,
@@ -33,7 +32,7 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
     );
 
     /**
-     * Recipient va type bo'yicha kod va uning amal qilish muddatini tekshirish
+     * Recipient, code va type bo'yicha topish
      */
     @Query("""
         SELECT v FROM VerificationCode v 
@@ -58,7 +57,7 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
     void deleteExpiredCodes(@Param("now") LocalDateTime now);
 
     /**
-     * Oxirgi 1 soat ichida yuborilgan kodlar sonini hisoblash (rate limiting)
+     * Recipient bo'yicha oxirgi soat ichida yuborilgan kodlar soni
      */
     @Query("""
         SELECT COUNT(v) FROM VerificationCode v 
@@ -69,6 +68,19 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
     long countRecentCodes(
             @Param("recipient") String recipient,
             @Param("type") VerificationType type,
+            @Param("since") LocalDateTime since
+    );
+
+    /**
+     * ✅ NEW: IP bo'yicha oxirgi soat ichida yuborilgan kodlar soni
+     */
+    @Query("""
+        SELECT COUNT(v) FROM VerificationCode v 
+        WHERE v.ipAddress = :ipAddress 
+        AND v.createdAt > :since
+        """)
+    long countByIpAddressAndCreatedAtAfter(
+            @Param("ipAddress") String ipAddress,
             @Param("since") LocalDateTime since
     );
 }

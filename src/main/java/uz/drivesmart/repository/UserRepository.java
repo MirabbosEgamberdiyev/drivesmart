@@ -1,13 +1,12 @@
 package uz.drivesmart.repository;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import uz.drivesmart.entity.Question;
 import uz.drivesmart.entity.User;
 import uz.drivesmart.enums.Role;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -18,28 +17,47 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    @Query(value = """
-        SELECT * FROM questions 
-        WHERE topic = :topic AND is_deleted = false
-        ORDER BY RANDOM() 
-        LIMIT :limit
-        """, nativeQuery = true)
-    List<Question> findRandomByTopic(@Param("topic") String topic, @Param("limit") int limit);
+    // ==================== PHONE NUMBER QUERIES ====================
 
-    @Query("SELECT q FROM Question q WHERE q.isDeleted = false AND q.topic = :topic")
-    List<Question> findByTopic(@Param("topic") String topic);
-
-    @Query("SELECT DISTINCT q.topic FROM Question q WHERE q.isDeleted = false ORDER BY q.topic")
-    List<String> findDistinctTopics();
-
-    // ✅ Count by topic
-    @Query("SELECT COUNT(q) FROM Question q WHERE q.isDeleted = false AND q.topic = :topic")
-    long countByTopic(@Param("topic") String topic);
     /**
      * Telefon raqami bo'yicha foydalanuvchi izlash
      */
     @Query("SELECT u FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber")
     Optional<User> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+
+    /**
+     * Telefon raqami mavjudligini tekshirish
+     */
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber")
+    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+
+    /**
+     * Telefon raqami mavjudligini tekshirish (o'zgartirishda)
+     */
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber AND u.id != :id")
+    boolean existsByPhoneNumberAndIdNot(@Param("phoneNumber") String phoneNumber, @Param("id") Long id);
+
+    // ==================== EMAIL QUERIES (✅ FIXED) ====================
+
+    /**
+     * Email orqali foydalanuvchi izlash
+     */
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    Optional<User> findByEmail(@Param("email") String email);
+
+    /**
+     * Email mavjudligini tekshirish
+     */
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    boolean existsByEmail(@Param("email") String email);
+
+    /**
+     * Email mavjudligini tekshirish (o'zgartirishda)
+     */
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.id != :id AND u.isDeleted = false")
+    boolean existsByEmailAndIdNot(@Param("email") String email, @Param("id") Long id);
+
+    // ==================== USER LISTS ====================
 
     /**
      * Active foydalanuvchilar
@@ -53,22 +71,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT u FROM User u WHERE u.isDeleted = false AND u.isActive = true AND u.role = :role ORDER BY u.firstName, u.lastName")
     List<User> findActiveByRole(@Param("role") Role role);
 
-    /**
-     * Telefon raqami mavjudligini tekshirish
-     */
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber")
-    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+    // ==================== USER LOOKUP ====================
 
     /**
-     * Telefon raqami mavjudligini tekshirish (o'zgartirishda)
+     * ID bo'yicha active foydalanuvchi
      */
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.isDeleted = false AND u.phoneNumber = :phoneNumber AND u.id != :id")
-    boolean existsByPhoneNumberAndIdNot(@Param("phoneNumber") String phoneNumber, @Param("id") Long id);
-    // ✅ Email orqali qidirish
-    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
-    boolean findByEmail(String email);
-
-    // ✅ Email mavjudligini tekshirish
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.isDeleted = false")
-    boolean existsByEmail(String email);
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = false")
+    Optional<User> findActiveById(@Param("id") Long id);
 }

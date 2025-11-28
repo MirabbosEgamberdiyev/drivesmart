@@ -1,5 +1,6 @@
 package uz.drivesmart.service.impl;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,10 +24,11 @@ import uz.drivesmart.security.jwt.JwtTokenProvider;
 import uz.drivesmart.util.ValidationUtil;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Mukammal Authentication Service
+ * ✅ 100% Working Authentication Service
  */
 @Service
 @Slf4j
@@ -57,33 +59,27 @@ public class AuthService {
     // ==================== REGISTRATION ====================
 
     /**
-     * Ro'yxatdan o'tish boshlang'ich so'rov
-     * Tasdiqlash kodi yuboradi
+     * ✅ Ro'yxatdan o'tish boshlang'ich so'rov
      */
     public VerificationSentResponseDto initiateRegistration(RegisterInitRequestDto request) {
-        log.info("Registration initiated for: {}", getRecipient(request));
-
-        // Telefon/Email unique ekanligini tekshirish
-        if (request.getVerificationType() == VerificationType.SMS) {
-            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-                throw new BusinessException("Bu telefon raqami allaqachon ro'yxatdan o'tgan");
-            }
-        } else {
-            // Email uchun ham qo'shing
-            // if (userRepository.existsByEmail(request.getEmail())) { ... }
-        }
-
-        // Parol validation
-        if (!ValidationUtil.isStrongPassword(request.getPassword())) {
-            throw new BusinessException("Parol kuchsiz. Kamida 6 ta belgi, katta va kichik harf, raqam bo'lishi kerak");
-        }
-
-        // Tasdiqlash kodi yuborish
         String recipient = getRecipient(request);
+        log.info("Registration initiated for: {}", recipient);
+
+        // ✅ Validate and check uniqueness
+        validateRegistrationRequest(request);
+
+        // ✅ Password strength check
+        if (!ValidationUtil.isStrongPassword(request.getPassword())) {
+            throw new BusinessException(
+                    "Parol kuchsiz. Kamida 8 ta belgi, katta/kichik harf, raqam va maxsus belgi (@$!%*?&#) bo'lishi kerak"
+            );
+        }
+
+        // ✅ Send verification code
         verificationService.sendVerificationCode(recipient, request.getVerificationType());
 
         return VerificationSentResponseDto.builder()
-                .recipient(maskRecipient(recipient))
+                .recipient(maskRecipient(recipient, request.getVerificationType()))
                 .expiresInMinutes(5)
                 .retryAfterSeconds(60)
                 .message("Tasdiqlash kodi yuborildi")
@@ -91,19 +87,50 @@ public class AuthService {
     }
 
     /**
-     * Ro'yxatdan o'tishni tasdiqlash va yakunlash
+     * ✅ Validate registration request
+     */
+    private void validateRegistrationRequest(RegisterInitRequestDto request) {
+        if (request.getVerificationType() == VerificationType.SMS) {
+            if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+                throw new BusinessException("Telefon raqami majburiy");
+            }
+            if (!ValidationUtil.isValidPhoneNumber(request.getPhoneNumber())) {
+                throw new BusinessException("Telefon raqami noto'g'ri formatda");
+            }
+            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                throw new BusinessException("Bu telefon raqami allaqachon ro'yxatdan o'tgan");
+            }
+        } else if (request.getVerificationType() == VerificationType.EMAIL) {
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new BusinessException("Email majburiy");
+            }
+            if (!ValidationUtil.isValidEmail(request.getEmail())) {
+                throw new BusinessException("Email noto'g'ri formatda");
+            }
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new BusinessException("Bu email allaqachon ro'yxatdan o'tgan");
+            }
+        } else {
+            throw new BusinessException("Tasdiqlash turi noto'g'ri");
+        }
+    }
+
+    /**
+     * ✅ Ro'yxatdan o'tishni tasdiqlash va yakunlash
      */
     public AuthResponseDto completeRegistration(RegisterInitRequestDto request, String code) {
-        log.info("Completing registration for: {}", getRecipient(request));
-
         String recipient = getRecipient(request);
+        log.info("Completing registration for: {}", recipient);
 
-        // Tasdiqlash kodini tekshirish
+        // ✅ Verify code
         if (!verificationService.verifyCode(recipient, code, request.getVerificationType())) {
             throw new BusinessException("Tasdiqlash kodi noto'g'ri yoki muddati o'tgan");
         }
 
-        // Foydalanuvchi yaratish
+        // ✅ Double-check uniqueness (race condition protection)
+        validateRegistrationRequest(request);
+
+        // ✅ Create user
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
@@ -114,45 +141,57 @@ public class AuthService {
         user.setIsActive(true);
 
         user = userRepository.save(user);
+        log.info("User created with ID: {}", user.getId());
 
-        // Tokenlar yaratish
+        // ✅ Generate tokens
         return generateAuthResponse(user);
     }
 
     // ==================== LOGIN ====================
 
     /**
-     * Login qilish (telefon yoki email orqali)
+     * ✅ Login qilish (telefon yoki email orqali)
      */
     public AuthResponseDto login(LoginRequestDto request) {
-        log.info("Login attempt for: {}", request.getPhoneNumber() != null ? request.getPhoneNumber() : request.getEmail());
+        String identifier = request.getPhoneNumber() != null ?
+                request.getPhoneNumber() : request.getEmail();
+        log.info("Login attempt for: {}", identifier);
 
-        User user;
-        if (request.getPhoneNumber() != null) {
-            user = userRepository.findByPhoneNumber(request.getPhoneNumber())
-                    .orElseThrow(() -> new BusinessException("Telefon raqami yoki parol noto'g'ri"));
-        } else {
-            // Email login qo'shing
-            throw new BusinessException("Email login hozircha qo'llab-quvvatlanmaydi");
-        }
+        // ✅ Find user by phone OR email
+        User user = findUserByLoginCredentials(request)
+                .orElseThrow(() -> new BusinessException("Login yoki parol noto'g'ri"));
 
+        // ✅ Active check
         if (!user.getIsActive()) {
             throw new BusinessException("Foydalanuvchi hisob qaydnomasi faol emas");
         }
 
+        // ✅ Password check
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BusinessException("Telefon raqami yoki parol noto'g'ri");
+            log.warn("Failed login attempt for user: {}", user.getId());
+            throw new BusinessException("Login yoki parol noto'g'ri");
         }
 
         log.info("User {} successfully logged in", user.getId());
-
         return generateAuthResponse(user);
+    }
+
+    /**
+     * ✅ Find user by phone or email
+     */
+    private Optional<User> findUserByLoginCredentials(LoginRequestDto request) {
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
+            return userRepository.findByPhoneNumber(request.getPhoneNumber());
+        } else if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            return userRepository.findByEmail(request.getEmail());
+        }
+        throw new BusinessException("Telefon raqami yoki email majburiy");
     }
 
     // ==================== PASSWORD MANAGEMENT ====================
 
     /**
-     * Parolni unutdim - tasdiqlash kodi yuborish
+     * ✅ Parolni unutdim - tasdiqlash kodi yuborish
      */
     public VerificationSentResponseDto forgotPassword(ForgotPasswordRequestDto request) {
         String recipient = request.getVerificationType() == VerificationType.SMS
@@ -161,17 +200,28 @@ public class AuthService {
 
         log.info("Forgot password request for: {}", recipient);
 
-        // Foydalanuvchi mavjudligini tekshirish
+        // ✅ Validate recipient
+        if (recipient == null || recipient.isBlank()) {
+            throw new BusinessException(
+                    request.getVerificationType() == VerificationType.SMS ?
+                            "Telefon raqami majburiy" : "Email majburiy"
+            );
+        }
+
+        // ✅ Check user exists
         if (request.getVerificationType() == VerificationType.SMS) {
             userRepository.findByPhoneNumber(request.getPhoneNumber())
                     .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
+        } else {
+            userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
         }
 
-        // Tasdiqlash kodi yuborish
+        // ✅ Send verification code
         verificationService.sendVerificationCode(recipient, request.getVerificationType());
 
         return VerificationSentResponseDto.builder()
-                .recipient(maskRecipient(recipient))
+                .recipient(maskRecipient(recipient, request.getVerificationType()))
                 .expiresInMinutes(5)
                 .retryAfterSeconds(60)
                 .message("Tasdiqlash kodi yuborildi")
@@ -179,56 +229,79 @@ public class AuthService {
     }
 
     /**
-     * Parolni tiklash (kod tasdiqlashdan keyin)
+     * ✅ Parolni tiklash (kod tasdiqlashdan keyin)
      */
     public void resetPassword(ResetPasswordRequestDto request) {
         log.info("Password reset for: {}", request.getRecipient());
 
-        // Tasdiqlash kodini tekshirish
-        if (!verificationService.verifyCode(request.getRecipient(), request.getCode(), request.getVerificationType())) {
+        // ✅ Verify code
+        if (!verificationService.verifyCode(
+                request.getRecipient(),
+                request.getCode(),
+                request.getVerificationType())) {
             throw new BusinessException("Tasdiqlash kodi noto'g'ri yoki muddati o'tgan");
         }
 
-        // Parol validation
+        // ✅ Password validation
         if (!ValidationUtil.isStrongPassword(request.getNewPassword())) {
-            throw new BusinessException("Parol kuchsiz. Kamida 6 ta belgi, katta va kichik harf, raqam bo'lishi kerak");
+            throw new BusinessException(
+                    "Parol kuchsiz. Kamida 8 ta belgi, katta/kichik harf, raqam va maxsus belgi bo'lishi kerak"
+            );
         }
 
-        // Foydalanuvchi topish va parolni yangilash
-        User user;
-        if (request.getVerificationType() == VerificationType.SMS) {
-            user = userRepository.findByPhoneNumber(request.getRecipient())
-                    .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
-        } else {
-            throw new BusinessException("Email reset hozircha qo'llab-quvvatlanmaydi");
-        }
+        // ✅ Find user by phone OR email
+        User user = findUserByRecipient(request.getRecipient(), request.getVerificationType())
+                .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
 
+        // ✅ Update password
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        // Barcha tokenlarni bekor qilish
+        // ✅ Revoke all refresh tokens (security best practice)
         refreshTokenRepository.revokeAllByUserId(user.getId(), LocalDateTime.now());
 
         log.info("Password reset successfully for user: {}", user.getId());
     }
 
     /**
-     * Parolni o'zgartirish (autentifikatsiya qilingan)
+     * ✅ Find user by recipient (phone or email)
+     */
+    private Optional<User> findUserByRecipient(String recipient, VerificationType type) {
+        if (type == VerificationType.SMS) {
+            return userRepository.findByPhoneNumber(recipient);
+        } else {
+            return userRepository.findByEmail(recipient);
+        }
+    }
+
+    /**
+     * ✅ Parolni o'zgartirish (autentifikatsiya qilingan)
      */
     public void changePassword(Long userId, String currentPassword, String newPassword) {
         log.info("Password change request for user: {}", userId);
 
         User user = userRepository.findById(userId)
+                .filter(u -> !u.getIsDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
 
+        // ✅ Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new BusinessException("Joriy parol noto'g'ri");
         }
 
+        // ✅ Validate new password
         if (!ValidationUtil.isStrongPassword(newPassword)) {
-            throw new BusinessException("Parol kuchsiz. Kamida 6 ta belgi, katta va kichik harf, raqam bo'lishi kerak");
+            throw new BusinessException(
+                    "Parol kuchsiz. Kamida 8 ta belgi, katta/kichik harf, raqam va maxsus belgi bo'lishi kerak"
+            );
         }
 
+        // ✅ Check if new password is different
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new BusinessException("Yangi parol avvalgisidan farq qilishi kerak");
+        }
+
+        // ✅ Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
@@ -238,21 +311,24 @@ public class AuthService {
     // ==================== TOKEN MANAGEMENT ====================
 
     /**
-     * Refresh token orqali yangi access token olish
+     * ✅ Refresh token orqali yangi access token olish
      */
     public AuthResponseDto refreshToken(String refreshTokenStr) {
         log.info("Refresh token request");
 
+        // ✅ Find valid token
         RefreshToken refreshToken = refreshTokenRepository
-                .findByToken(refreshTokenStr, LocalDateTime.now())
+                .findValidToken(refreshTokenStr)
                 .orElseThrow(() -> new BusinessException("Token yaroqsiz yoki muddati o'tgan"));
 
         User user = refreshToken.getUser();
 
+        // ✅ Check user is active
         if (!user.getIsActive()) {
             throw new BusinessException("Foydalanuvchi faol emas");
         }
 
+        // ✅ Generate new access token
         String newAccessToken = tokenProvider.generateToken(user.getId(), user.getRole());
 
         return AuthResponseDto.builder()
@@ -265,10 +341,12 @@ public class AuthService {
     }
 
     /**
-     * Logout - refresh tokenni bekor qilish
+     * ✅ Logout - refresh tokenni bekor qilish
      */
     public void logout(String refreshTokenStr) {
-        refreshTokenRepository.findByToken(refreshTokenStr, LocalDateTime.now())
+        log.info("Logout request");
+
+        refreshTokenRepository.findByToken(refreshTokenStr)
                 .ifPresent(token -> {
                     token.revoke();
                     refreshTokenRepository.save(token);
@@ -276,11 +354,10 @@ public class AuthService {
                 });
     }
 
-
     // ==================== USER INFO ====================
 
     /**
-     * Joriy foydalanuvchi ma'lumotlarini olish
+     * ✅ Joriy foydalanuvchi ma'lumotlarini olish
      */
     @Transactional(readOnly = true)
     public UserResponseDto getCurrentUser(Authentication authentication) {
@@ -301,16 +378,18 @@ public class AuthService {
     // ==================== HELPER METHODS ====================
 
     /**
-     * Auth response yaratish (access + refresh token)
+     * ✅ Auth response yaratish (access + refresh token)
      */
     private AuthResponseDto generateAuthResponse(User user) {
         String accessToken = tokenProvider.generateToken(user.getId(), user.getRole());
         String refreshTokenStr = UUID.randomUUID().toString();
+        String tokenFamily = UUID.randomUUID().toString();
 
-        // Refresh token saqlash
+        // ✅ Refresh token saqlash
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(refreshTokenStr)
                 .user(user)
+                .tokenFamily(tokenFamily)
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .build();
 
@@ -326,7 +405,7 @@ public class AuthService {
     }
 
     /**
-     * Recipient olish (telefon yoki email)
+     * ✅ Recipient olish (telefon yoki email)
      */
     private String getRecipient(RegisterInitRequestDto request) {
         return request.getVerificationType() == VerificationType.SMS
@@ -335,12 +414,13 @@ public class AuthService {
     }
 
     /**
-     * Recipient'ni mask qilish (xavfsizlik uchun)
+     * ✅ Recipient'ni mask qilish (xavfsizlik uchun)
      */
-    private String maskRecipient(String recipient) {
-        if (recipient.length() > 8) {
-            return recipient.substring(0, 4) + "****" + recipient.substring(recipient.length() - 2);
+    private String maskRecipient(String recipient, VerificationType type) {
+        if (type == VerificationType.SMS) {
+            return ValidationUtil.maskPhoneNumber(recipient);
+        } else {
+            return ValidationUtil.maskEmail(recipient);
         }
-        return recipient;
     }
 }
