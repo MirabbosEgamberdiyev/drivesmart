@@ -31,6 +31,7 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -56,14 +57,15 @@ public class SecurityConfig {
                         // AUTH - barcha autentifikatsiya endpointlari
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // SWAGGER & API DOCS
+                        // SWAGGER & API DOCS - All possible Swagger paths
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
+                                "/api-docs/**",           // ✅ Added this
                                 "/swagger-resources/**",
-                                "/webjars/**",
-                                "/swagger-config"
+                                "/swagger-config",        // ✅ Added this
+                                "/webjars/**"
                         ).permitAll()
 
                         // MONITORING
@@ -89,6 +91,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

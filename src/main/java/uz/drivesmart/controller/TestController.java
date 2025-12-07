@@ -148,46 +148,46 @@ public class TestController {
         );
     }
 
-    // ========== DEPRECATED METHODS ==========
-
-    @Operation(
-            summary = "[DEPRECATED] Har bir javobni alohida yuborish",
-            description = "Eski usul. submitAllAnswers dan foydalaning!",
-            deprecated = true
-    )
-    @PostMapping("/{sessionId}/answer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
-    @Deprecated
-    public ResponseEntity<ApiResponseDto<AnswerResultResponse>> submitAnswer(
-            @PathVariable Long sessionId,
-            @Valid @RequestBody SubmitAnswerRequest request,
-            Authentication authentication) {
-
-        Long userId = ((UserPrincipal) authentication.getPrincipal()).getId();
-        AnswerResultResponse response = testService.submitAnswer(userId, sessionId, request);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.success(response)
-        );
-    }
-
-    @Operation(
-            summary = "[DEPRECATED] Oddiy natija",
-            description = "Eski format. getDetailedResult dan foydalaning!",
-            deprecated = true
-    )
-    @GetMapping("/{sessionId}/result-simple")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
-    @Deprecated
-    public ResponseEntity<ApiResponseDto<TestResultResponse>> getSimpleResult(
-            @PathVariable Long sessionId,
-            Authentication authentication) {
-
-        Long userId = ((UserPrincipal) authentication.getPrincipal()).getId();
-        TestResultResponse response = testService.getResult(userId, sessionId);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.success(response)
-        );
-    }
+//    // ========== DEPRECATED METHODS ==========
+//
+//    @Operation(
+//            summary = "[DEPRECATED] Har bir javobni alohida yuborish",
+//            description = "Eski usul. submitAllAnswers dan foydalaning!",
+//            deprecated = true
+//    )
+//    @PostMapping("/{sessionId}/answer")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+//    @Deprecated
+//    public ResponseEntity<ApiResponseDto<AnswerResultResponse>> submitAnswer(
+//            @PathVariable Long sessionId,
+//            @Valid @RequestBody SubmitAnswerRequest request,
+//            Authentication authentication) {
+//
+//        Long userId = ((UserPrincipal) authentication.getPrincipal()).getId();
+//        AnswerResultResponse response = testService.submitAnswer(userId, sessionId, request);
+//
+//        return ResponseEntity.ok(
+//                ApiResponseDto.success(response)
+//        );
+//    }
+//
+//    @Operation(
+//            summary = "[DEPRECATED] Oddiy natija",
+//            description = "Eski format. getDetailedResult dan foydalaning!",
+//            deprecated = true
+//    )
+//    @GetMapping("/{sessionId}/result-simple")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+//    @Deprecated
+//    public ResponseEntity<ApiResponseDto<TestResultResponse>> getSimpleResult(
+//            @PathVariable Long sessionId,
+//            Authentication authentication) {
+//
+//        Long userId = ((UserPrincipal) authentication.getPrincipal()).getId();
+//        TestResultResponse response = testService.getResult(userId, sessionId);
+//
+//        return ResponseEntity.ok(
+//                ApiResponseDto.success(response)
+//        );
+//    }
 }

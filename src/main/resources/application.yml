@@ -9,11 +9,17 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
   # JPA configuration
   jpa:
     hibernate:
-      ddl-auto: update  # create -> update o'zgartirildi (production uchun)
+      ddl-auto: create  # create -> update o'zgartirildi (production uchun)
     show-sql: false
     properties:
       hibernate:
@@ -21,6 +27,15 @@ spring:
         format_sql: true
         jdbc:
           time_zone: Asia/Tashkent
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  # Liquibase for migrations
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    default-schema: public
 
   # Jackson configuration
   jackson:
@@ -28,14 +43,18 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     serialization:
       write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
 
   # Multipart configuration
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+      enabled: true
 
-  # Mail configuration (SMTP)
+  # Mail configuration (SMTP) - Spring Boot default
   mail:
     host: ${MAIL_HOST:smtp.mail.ru}
     port: ${MAIL_PORT:465}
@@ -45,62 +64,89 @@ spring:
       mail:
         smtp:
           auth: true
-          starttls:
-            enable: true
           ssl:
             enable: true
-            trust: ${MAIL_HOST:smtp.mail.ru}
+            trust: smtp.mail.ru
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 # Server configuration
 server:
   port: ${PORT:9080}
   servlet:
     context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   error:
     include-message: always
     include-binding-errors: always
+    include-stacktrace: never
+    whitelabel:
+      enabled: false
 
 # Application specific properties
 app:
   # JWT configuration
   jwt:
     secret: ${JWT_SECRET:cG9zU3lzdGVtU2VjcmV0S2V5Rm9yU2lnbmluZ0pXVFRva2Vuc1ZlcnlTZWNyZXRLZXk=}
-    expiration-ms: ${JWT_EXPIRATION:86400000} # 24 hours
+    expiration-ms: 86400000    # 24 hours
+    refresh-expiration-ms: 2592000000  # 30 days
 
   # File upload
-  file:
-    upload-dir: uploads/
+  upload:
+    dir: ${UPLOAD_DIR:uploads/}
+    max-size: 10485760  # 10MB
+
+  # Mail configuration (custom properties for EmailConfiguration)
+  mail:
+    host: ${MAIL_HOST:smtp.mail.ru}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:mirabbosegamberdiyev7@mail.ru}
+    password: ${MAIL_PASSWORD:r2CePkKRjrebdGl5oR1s}
+    from: ${MAIL_FROM:mirabbosegamberdiyev7@mail.ru}
+    from-name: ${MAIL_FROM_NAME:DriveSmart}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: false
+          ssl:
+            enable: true
+          connectiontimeout: 50000
+          timeout: 50000
+          writetimeout: 50000
 
   # SMS configuration (Eskiz)
   sms:
     eskiz:
       email: ${SMS_ESKIZ_EMAIL:egamberdiyevmirabbos7@gmail.com}
       secret-key: ${SMS_ESKIZ_SECRET_KEY:kIhEt04V7R95uQYlmwaWNFFDzdrbv1bSK0VxEnfa}
-      test-mode: ${SMS_TEST_MODE:true}  # Production'da false qiling
+      test-mode: ${SMS_TEST_MODE:true}
 
-  # Mail configuration (custom properties)
-  mail:
-    host: ${MAIL_HOST:smtp.mail.ru}
-    port: ${MAIL_PORT:465}
-    username: ${MAIL_USERNAME:mirabbosegamberdiyev7@mail.ru}
-    password: ${MAIL_PASSWORD:r2CePkKRjrebdGl5oR1s}
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true           # Auth talab qilinadi
-          starttls:
-            enable: false      # STARTTLS o‘chirilgan (SSL ishlatyapti)
-          ssl:
-            enable: true       # SSL yoqilgan
-          connectiontimeout: 50000   # Ulanish vaqti (ms)
-          timeout: 50000             # Javob kutish vaqti
-          writetimeout: 50000        # Yozish uchun kutish vaqti
+  # Payment configuration
+  payment:
+    click:
+      merchant-id: ${CLICK_MERCHANT_ID:your-merchant-id}
+      service-id: ${CLICK_SERVICE_ID:your-service-id}
+      secret-key: ${CLICK_SECRET_KEY:your-secret-key}
+    payme:
+      merchant-id: ${PAYME_MERCHANT_ID:your-merchant-id}
+      secret-key: ${PAYME_SECRET_KEY:your-secret-key}
+    uzum:
+      merchant-id: ${UZUM_MERCHANT_ID:your-merchant-id}
+      secret-key: ${UZUM_SECRET_KEY:your-secret-key}
 
 # Logging configuration
 logging:
   level:
+    root: INFO
     uz.drivesmart: DEBUG
+    org.springframework.web: INFO
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
@@ -108,14 +154,15 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
   file:
-    name: logs/drivesmart-system.log
+    name: logs/drivesmart.log
     max-size: 10MB
     max-history: 30
+    total-size-cap: 1GB
 
 # OpenAPI/Swagger configuration
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    path: /api-docs
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
@@ -125,14 +172,32 @@ springdoc:
     try-it-out-enabled: true
     filter: true
     display-request-duration: true
-  show-actuator: true
+    doc-expansion: none
+  show-actuator: false
 
 # Management endpoints (Actuator)
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,swagger-ui
+        include: health,info,metrics,prometheus
+      base-path: /actuator
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+# Application info
+info:
+  app:
+    name: DriveSmart Backend
+    description: Haydovchilik test platformasi
+    version: 1.0.0

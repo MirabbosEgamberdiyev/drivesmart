@@ -13,6 +13,7 @@ import uz.drivesmart.enums.TestStatus;
 import uz.drivesmart.exception.BusinessException;
 import uz.drivesmart.exception.ResourceNotFoundException;
 import uz.drivesmart.repository.*;
+import uz.drivesmart.service.TestAccessService;
 import uz.drivesmart.service.TestService;
 
 import java.time.Duration;
@@ -30,12 +31,13 @@ public class TestServiceImpl implements TestService {
     private final TestSessionRepository sessionRepository;
     private final UserRepository userRepository;
     private final UserAnswerRepository answerRepository;
+    private final TestPackageRepository packageRepository;
+    private final TestAccessService accessService;
 
-    private static final double PASS_THRESHOLD = 70.0; // 70% dan yuqori - o'tgan
+    private static final double PASS_THRESHOLD = 70.0;
 
     /**
-     * ✅ Testni boshlash - BARCHA savollarni qaytarish
-     * ptest.uz formatiga to'liq mos
+     * ✅ Testni boshlash - PULLIK PAKETLAR UCHUN ACCESS CONTROL
      */
     @Override
     @Transactional
@@ -45,6 +47,23 @@ public class TestServiceImpl implements TestService {
 
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
+
+        // ✅ Paket topish
+        var testPackage = packageRepository.findByTopicAndActive(request.topic())
+                .stream()
+                .filter(pkg -> pkg.getQuestionCount().equals(request.questionCount()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("Bu test paketi topilmadi"));
+
+        // ✅ Kirish huquqini tekshirish
+        if (!accessService.canAccessTest(userId, testPackage.getId())) {
+            throw new BusinessException(
+                    "Bu test paketiga kirish huquqingiz yo'q. Iltimos, avval sotib oling"
+            );
+        }
+
+        // ✅ Urinishni kamaytirish
+        accessService.consumeAttempt(userId, testPackage.getId());
 
         // ✅ Random savollarni olish
         var questions = questionRepository.findRandomByTopic(
@@ -65,19 +84,19 @@ public class TestServiceImpl implements TestService {
         session.setTopic(request.topic());
         session.setTotalQuestions(questions.size());
         session.setStartedAt(LocalDateTime.now());
-        session.setDurationMinutes(30); // Default 30 daqiqa
+        session.setDurationMinutes(30);
         session.setStatus(TestStatus.IN_PROGRESS);
         session = sessionRepository.save(session);
 
-        // ✅ Savollarni DTO ga o'girish
+        // ✅ Frontend uchun savollar (correctAnswer va explanation BILAN)
         List<QuestionForTestDto> questionDtos = questions.stream()
                 .map(q -> new QuestionForTestDto(
                         q.getId(),
                         q.getText(),
                         q.getOptions(),
                         getImageUrl(q.getImagePath()),
-                        q.getCorrectAnswer(),     // Frontend'da yashiriladi
-                        q.getExplanation()        // Test tugagach ko'rsatiladi
+                        q.getCorrectAnswer(),     // ✅ Frontend'da tekshirish uchun
+                        q.getExplanation()        // ✅ Frontend'da ko'rsatish uchun
                 ))
                 .toList();
 
@@ -98,7 +117,7 @@ public class TestServiceImpl implements TestService {
     }
 
     /**
-     * ✅ Barcha javoblarni bir vaqtda qabul qilish va natijani qaytarish
+     * ✅ Statistika uchun javoblarni saqlash
      */
     @Override
     @Transactional
@@ -109,14 +128,11 @@ public class TestServiceImpl implements TestService {
         log.info("Barcha javoblar yuborildi: userId={}, sessionId={}, answers={}",
                 userId, request.sessionId(), request.answers().size());
 
-        // ✅ Session'ni tekshirish
         var session = sessionRepository.findByIdAndUserId(request.sessionId(), userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sessiya topilmadi"));
 
-        // ✅ Session statusini tekshirish
         if (session.getStatus() == TestStatus.COMPLETED) {
             log.warn("Test allaqachon tugallangan: sessionId={}", request.sessionId());
-            // Allaqachon tugagan bo'lsa, mavjud natijani qaytarish
             return getResultById(userId, request.sessionId());
         }
 
@@ -124,7 +140,6 @@ public class TestServiceImpl implements TestService {
             throw new BusinessException("Test bekor qilingan");
         }
 
-        // ✅ Vaqtni tekshirish
         if (session.isExpired()) {
             log.warn("Test vaqti tugadi: sessionId={}", request.sessionId());
             session.setStatus(TestStatus.ABANDONED);
@@ -133,13 +148,11 @@ public class TestServiceImpl implements TestService {
             throw new BusinessException("Test vaqti tugadi");
         }
 
-        // ✅ Takroriy javoblarni tekshirish
         boolean hasAnswers = answerRepository.existsByTestSessionId(request.sessionId());
         if (hasAnswers) {
             throw new BusinessException("Bu testga javoblar allaqachon yuborilgan");
         }
 
-        // ✅ Barcha savollarni bir martalik olish (N+1 muammosini hal qilish)
         List<Long> questionIds = request.answers().stream()
                 .map(UserAnswerDto::questionId)
                 .toList();
@@ -148,7 +161,6 @@ public class TestServiceImpl implements TestService {
                 .stream()
                 .collect(Collectors.toMap(Question::getId, q -> q));
 
-        // ✅ Javoblarni tekshirish va saqlash
         List<UserAnswer> userAnswers = new ArrayList<>();
         int correctCount = 0;
 
@@ -159,7 +171,6 @@ public class TestServiceImpl implements TestService {
                 throw new ResourceNotFoundException("Savol topilmadi: " + answerDto.questionId());
             }
 
-            // ✅ Javobni tekshirish (case-insensitive va whitespace'siz)
             boolean isCorrect = question.getCorrectAnswer()
                     .trim()
                     .equalsIgnoreCase(answerDto.selectedAnswer().trim());
@@ -178,10 +189,9 @@ public class TestServiceImpl implements TestService {
             userAnswers.add(userAnswer);
         }
 
-        // ✅ Barcha javoblarni batch save (performance optimization)
+        // ✅ Statistika uchun saqlash
         answerRepository.saveAll(userAnswers);
 
-        // ✅ Session'ni yangilash
         int wrongCount = session.getTotalQuestions() - correctCount;
         session.setScore(correctCount);
         session.setCorrectCount(correctCount);
@@ -193,13 +203,9 @@ public class TestServiceImpl implements TestService {
         log.info("Test tugallandi: sessionId={}, correct={}, wrong={}",
                 session.getId(), correctCount, wrongCount);
 
-        // ✅ Batafsil natijani tayyorlash
         return buildDetailedResult(session, userAnswers, questionsMap);
     }
 
-    /**
-     * ✅ Test natijasini ID bo'yicha olish
-     */
     @Override
     @Transactional(readOnly = true)
     public TestResultDetailedResponse getResultById(Long userId, Long sessionId) {
@@ -212,10 +218,8 @@ public class TestServiceImpl implements TestService {
             throw new BusinessException("Test hali tugallanmagan");
         }
 
-        // ✅ Barcha javoblarni olish
         List<UserAnswer> userAnswers = answerRepository.findByTestSessionId(sessionId);
 
-        // ✅ Savollarni olish
         List<Long> questionIds = userAnswers.stream()
                 .map(ua -> ua.getQuestion().getId())
                 .toList();
@@ -227,19 +231,14 @@ public class TestServiceImpl implements TestService {
         return buildDetailedResult(session, userAnswers, questionsMap);
     }
 
-    /**
-     * ✅ Batafsil natijani yaratish
-     */
     private TestResultDetailedResponse buildDetailedResult(
             TestSession session,
             List<UserAnswer> userAnswers,
             Map<Long, Question> questionsMap
     ) {
-        // ✅ Har bir javob bo'yicha batafsil ma'lumot
         List<AnswerDetailDto> answerDetails = userAnswers.stream()
                 .map(ua -> {
                     Question q = ua.getQuestion();
-                    // Agar questionsMap'da bo'lmasa, lazy loading orqali olish
                     if (questionsMap.containsKey(q.getId())) {
                         q = questionsMap.get(q.getId());
                     }
@@ -256,11 +255,9 @@ public class TestServiceImpl implements TestService {
                 })
                 .toList();
 
-        // ✅ Foiz hisobi
         double percentage = (session.getCorrectCount() * 100.0) / session.getTotalQuestions();
         boolean passed = percentage >= PASS_THRESHOLD;
 
-        // ✅ Davomiylik hisobi
         long durationSeconds = Duration.between(
                 session.getStartedAt(),
                 session.getFinishedAt()
@@ -282,9 +279,6 @@ public class TestServiceImpl implements TestService {
         );
     }
 
-    /**
-     * ✅ Test tarixini olish
-     */
     @Override
     @Transactional(readOnly = true)
     public List<TestSessionResponse> getHistory(Long userId) {
@@ -296,9 +290,6 @@ public class TestServiceImpl implements TestService {
                 .toList();
     }
 
-    /**
-     * ✅ Testni bekor qilish
-     */
     @Override
     @Transactional
     public void abandonTest(Long userId, Long sessionId) {
@@ -315,97 +306,6 @@ public class TestServiceImpl implements TestService {
         session.setFinishedAt(LocalDateTime.now());
         sessionRepository.save(session);
     }
-
-    /**
-     * ❌ DEPRECATED: Har bir javobni alohida yuborish (eski usul)
-     */
-    @Deprecated
-    @Override
-    @Transactional
-    public AnswerResultResponse submitAnswer(
-            Long userId,
-            Long sessionId,
-            SubmitAnswerRequest request
-    ) {
-        log.warn("DEPRECATED: submitAnswer ishlatildi. submitAllAnswers dan foydalaning!");
-
-        var session = sessionRepository.findByIdAndUserId(sessionId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sessiya topilmadi"));
-
-        if (session.isExpired() || session.getStatus() != TestStatus.IN_PROGRESS) {
-            throw new BusinessException("Test tugagan yoki bekor qilingan");
-        }
-
-        var question = questionRepository.findById(request.questionId())
-                .orElseThrow(() -> new ResourceNotFoundException("Savol topilmadi"));
-
-        boolean alreadyAnswered = answerRepository.existsByTestSessionIdAndQuestionId(
-                sessionId, request.questionId()
-        );
-
-        if (alreadyAnswered) {
-            throw new BusinessException("Bu savolga javob allaqachon berilgan");
-        }
-
-        boolean isCorrect = question.getCorrectAnswer()
-                .trim()
-                .equalsIgnoreCase(request.answer().trim());
-
-        var answer = new UserAnswer();
-        answer.setUser(session.getUser());
-        answer.setQuestion(question);
-        answer.setTestSession(session);
-        answer.setSelectedAnswer(request.answer());
-        answer.setCorrect(isCorrect);
-        answer.setAnsweredAt(LocalDateTime.now());
-        answerRepository.save(answer);
-
-        if (isCorrect) {
-            session.setScore(session.getScore() + 1);
-            session.setCorrectCount(session.getCorrectCount() + 1);
-        } else {
-            session.setWrongCount(session.getWrongCount() + 1);
-        }
-
-        sessionRepository.save(session);
-
-        return new AnswerResultResponse(
-                isCorrect,
-                question.getCorrectAnswer(),
-                session.getScore()
-        );
-    }
-
-    /**
-     * ❌ DEPRECATED: Oddiy natija
-     */
-    @Deprecated
-    @Override
-    @Transactional(readOnly = true)
-    public TestResultResponse getResult(Long userId, Long sessionId) {
-        log.warn("DEPRECATED: getResult ishlatildi. getResultById dan foydalaning!");
-
-        var session = sessionRepository.findByIdAndUserId(sessionId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sessiya topilmadi"));
-
-        long correct = session.getCorrectCount();
-        double percentage = (correct * 100.0) / session.getTotalQuestions();
-
-        return new TestResultResponse(
-                session.getId(),
-                session.getTopic(),
-                session.getTotalQuestions(),
-                (int) correct,
-                session.getScore(),
-                percentage,
-                session.getStartedAt(),
-                session.getFinishedAt()
-        );
-    }
-
-    // ============================================
-    // Helper metodlar
-    // ============================================
 
     private String getImageUrl(String imagePath) {
         if (imagePath == null || imagePath.isBlank()) {
@@ -426,9 +326,5 @@ public class TestServiceImpl implements TestService {
                 session.getStartedAt(),
                 session.getFinishedAt()
         );
-    }
-
-    private boolean existsByTestSessionId(Long sessionId) {
-        return answerRepository.countByTestSessionId(sessionId) > 0;
     }
 }

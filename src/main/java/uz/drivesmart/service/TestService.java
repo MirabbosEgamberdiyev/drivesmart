@@ -21,12 +21,12 @@ public interface TestService {
      */
     TestStartResponse startTest(Long userId, TestRequest request);
 
-    /**
-     * ❌ DEPRECATED: Har bir javobni alohida yuborish (eski usul)
-     * Mavjud frontend kodlar uchun saqlanadi, lekin yangi loyihalarda ishlatmaslik tavsiya etiladi
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    AnswerResultResponse submitAnswer(Long userId, Long sessionId, SubmitAnswerRequest request);
+//    /**
+//     * ❌ DEPRECATED: Har bir javobni alohida yuborish (eski usul)
+//     * Mavjud frontend kodlar uchun saqlanadi, lekin yangi loyihalarda ishlatmaslik tavsiya etiladi
+//     */
+//    @Deprecated(since = "2.0", forRemoval = true)
+//    AnswerResultResponse submitAnswer(Long userId, Long sessionId, SubmitAnswerRequest request);
 
     /**
      * ✅ Barcha javoblarni bir vaqtda yuborish (ptest.uz usuli)
@@ -36,11 +36,11 @@ public interface TestService {
      */
     TestResultDetailedResponse submitAllAnswers(Long userId, SubmitAllAnswersRequest request);
 
-    /**
-     * ❌ DEPRECATED: Oddiy natija (eski format)
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    TestResultResponse getResult(Long userId, Long sessionId);
+//    /**
+//     * ❌ DEPRECATED: Oddiy natija (eski format)
+//     */
+//    @Deprecated(since = "2.0", forRemoval = true)
+//    TestResultResponse getResult(Long userId, Long sessionId);
 
     /**
      * ✅ Test natijasini batafsil olish

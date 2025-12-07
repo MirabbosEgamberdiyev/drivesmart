@@ -1,0 +1,33 @@
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        generate_statistics: false
+
+  # Production datasource
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+
+# Logging for production
+logging:
+  level:
+    root: INFO
+    uz.drivesmart: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
+# Actuator security
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+
+# SMS test mode off
+app:
+  sms:
+    eskiz:
+      test-mode: false
