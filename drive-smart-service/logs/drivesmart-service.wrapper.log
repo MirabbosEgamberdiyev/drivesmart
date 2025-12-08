@@ -1,0 +1,119 @@
+2025-12-08 14:18:34,670 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:18:40,993 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:18:41,690 INFO  - Installing the service with id 'drivesmart-backend'
+2025-12-08 14:18:41,754 DEBUG - Completed. Exit code is 0
+2025-12-08 14:18:42,079 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:18:45,200 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:18:45,837 INFO  - Starting the service with id 'drivesmart-backend'
+2025-12-08 14:18:45,877 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:18:49,994 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:18:50,646 DEBUG - User requested the status of the process with id 'drivesmart-backend'
+2025-12-08 14:18:50,650 DEBUG - Completed. Exit code is 0
+2025-12-08 14:21:06,521 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:21:09,531 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:21:10,196 INFO  - Installing the service with id 'drivesmart-service'
+2025-12-08 14:21:10,256 DEBUG - Completed. Exit code is 0
+2025-12-08 14:21:10,580 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:21:13,454 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:21:14,106 INFO  - Starting the service with id 'drivesmart-service'
+2025-12-08 14:21:14,143 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:21:15,805 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:21:16,454 DEBUG - User requested the status of the process with id 'drivesmart-service'
+2025-12-08 14:21:16,458 DEBUG - Completed. Exit code is 0
+2025-12-08 14:23:49,365 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:23:52,755 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:23:53,416 INFO  - Stopping the service with id 'drivesmart-service'
+2025-12-08 14:23:53,438 INFO  - The service with ID 'drivesmart-service' is not running
+2025-12-08 14:23:53,439 DEBUG - Completed. Exit code is 0
+2025-12-08 14:23:55,144 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:23:58,071 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:23:58,709 INFO  - Uninstalling the service with id 'drivesmart-service'
+2025-12-08 14:23:58,723 DEBUG - Completed. Exit code is 0
+2025-12-08 14:24:13,984 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:24:17,997 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:24:18,653 INFO  - Installing the service with id 'drivesmart-service'
+2025-12-08 14:24:18,680 DEBUG - Completed. Exit code is 0
+2025-12-08 14:24:28,142 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:24:31,311 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:24:31,955 INFO  - Starting the service with id 'drivesmart-service'
+2025-12-08 14:24:31,991 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:24:34,335 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:24:34,851 DEBUG - User requested the status of the process with id 'drivesmart-service'
+2025-12-08 14:24:34,855 DEBUG - Completed. Exit code is 0
+2025-12-08 14:25:52,642 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:25:55,648 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:25:56,312 INFO  - Starting the service with id 'drivesmart-service'
+2025-12-08 14:25:56,351 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:26:02,820 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:26:03,454 DEBUG - User requested the status of the process with id 'drivesmart-service'
+2025-12-08 14:26:03,458 DEBUG - Completed. Exit code is 0
+2025-12-08 14:27:43,562 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:27:46,600 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:27:47,265 INFO  - Stopping the service with id 'drivesmart-service'
+2025-12-08 14:27:47,286 INFO  - The service with ID 'drivesmart-service' is not running
+2025-12-08 14:27:47,288 DEBUG - Completed. Exit code is 0
+2025-12-08 14:28:23,036 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:28:23,598 FATAL - Unhandled exception
+System.Exception: Unknown command: unistall
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:28:38,157 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:28:41,169 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:28:41,825 INFO  - Installing the service with id 'drivesmart-service'
+2025-12-08 14:28:41,829 FATAL - Unhandled exception
+System.Exception: Installation failure: Service with id 'drivesmart-service' already exists
+   â winsw.WrapperService.<Run>g__Install|33_0(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:29:01,280 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:04,685 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:05,329 INFO  - Uninstalling the service with id 'drivesmart-service'
+2025-12-08 14:29:05,344 DEBUG - Completed. Exit code is 0
+2025-12-08 14:29:11,902 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:14,998 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:15,643 INFO  - Installing the service with id 'drivesmart-service'
+2025-12-08 14:29:15,672 DEBUG - Completed. Exit code is 0
+2025-12-08 14:29:22,341 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:25,649 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:29:26,288 INFO  - Starting the service with id 'drivesmart-service'
+2025-12-08 14:29:26,323 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)
+2025-12-08 14:32:31,235 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:32:34,717 DEBUG - Starting WinSW in the CLI mode
+2025-12-08 14:32:35,389 INFO  - Starting the service with id 'drivesmart-service'
+2025-12-08 14:32:35,427 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   â WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   â WMI.WmiRoot.InstanceHandler.Invoke(Object proxy, MethodInfo method, Object[] arguments)
+   â winsw.WrapperService.<Run>g__Start|33_2(<>c__DisplayClass33_0& )
+   â winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   â winsw.WrapperService.Main(String[] args)

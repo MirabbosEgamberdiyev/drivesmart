@@ -14,7 +14,7 @@ spring:
 # Logging for production
 logging:
   level:
-    root: INFO
+    root: OFF
     uz.drivesmart: INFO
     org.springframework: WARN
     org.hibernate: WARN
