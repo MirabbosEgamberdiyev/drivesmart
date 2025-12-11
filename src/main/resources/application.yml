@@ -130,16 +130,22 @@ app:
 
   # Payment configuration
   payment:
-    click:
-      merchant-id: ${CLICK_MERCHANT_ID:your-merchant-id}
-      service-id: ${CLICK_SERVICE_ID:your-service-id}
-      secret-key: ${CLICK_SECRET_KEY:your-secret-key}
-    payme:
-      merchant-id: ${PAYME_MERCHANT_ID:your-merchant-id}
-      secret-key: ${PAYME_SECRET_KEY:your-secret-key}
     uzum:
-      merchant-id: ${UZUM_MERCHANT_ID:your-merchant-id}
-      secret-key: ${UZUM_SECRET_KEY:your-secret-key}
+      merchant-id: "UZUM_MERCHANT_ID"
+      secret-key: "UZUM_SECRET_KEY"
+      api-url: "https://api.uzum.uz/v1"
+
+    payme:
+      merchant-id: "PAYME_MERCHANT_ID"
+      key: "PAYME_SECRET_KEY"
+      api-url: "https://checkout.paycom.uz/api"
+
+    click:
+      merchant-id: "CLICK_MERCHANT_ID"
+      service-id: "CLICK_SERVICE_ID"
+      secret-key: "CLICK_SECRET_KEY"
+      api-url: "https://api.click.uz/v2"
+
 
 # Logging configuration
 logging:
