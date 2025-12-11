@@ -19,7 +19,7 @@ spring:
   # JPA configuration
   jpa:
     hibernate:
-      ddl-auto: create  # create -> update o'zgartirildi (production uchun)
+      ddl-auto: update  # create -> update o'zgartirildi (production uchun)
     show-sql: false
     properties:
       hibernate:

@@ -48,22 +48,23 @@ public class TestServiceImpl implements TestService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi"));
 
+        //Test uchun hozircha commentda turadi
         // ✅ Paket topish
-        var testPackage = packageRepository.findByTopicAndActive(request.topic())
-                .stream()
-                .filter(pkg -> pkg.getQuestionCount().equals(request.questionCount()))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException("Bu test paketi topilmadi"));
+//        var testPackage = packageRepository.findByTopicAndActive(request.topic())
+//                .stream()
+//                .filter(pkg -> pkg.getQuestionCount().equals(request.questionCount()))
+//                .findFirst()
+//                .orElseThrow(() -> new BusinessException("Bu test paketi topilmadi"));
 
         // ✅ Kirish huquqini tekshirish
-        if (!accessService.canAccessTest(userId, testPackage.getId())) {
-            throw new BusinessException(
-                    "Bu test paketiga kirish huquqingiz yo'q. Iltimos, avval sotib oling"
-            );
-        }
+//        if (!accessService.canAccessTest(userId, testPackage.getId())) {
+//            throw new BusinessException(
+//                    "Bu test paketiga kirish huquqingiz yo'q. Iltimos, avval sotib oling"
+//            );
+//        }
 
         // ✅ Urinishni kamaytirish
-        accessService.consumeAttempt(userId, testPackage.getId());
+//        accessService.consumeAttempt(userId, testPackage.getId());
 
         // ✅ Random savollarni olish
         var questions = questionRepository.findRandomByTopic(
